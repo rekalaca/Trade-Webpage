@@ -798,28 +798,22 @@ function attachEventListeners() {
     mobileToggle.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (navMenu.classList.contains('is-active') || navMenu.style.display === 'flex') {
-        navMenu.classList.remove('is-active');
-        navMenu.style.display = 'none';
-      } else {
-        navMenu.classList.add('is-active');
-        navMenu.style.display = 'flex';
-      }
+      navMenu.classList.toggle('is-active');
     });
 
     // Close mobile menu when clicking any nav item
     navMenu.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
         navMenu.classList.remove('is-active');
-        navMenu.style.display = 'none';
       });
     });
 
     // Close when clicking outside
     document.addEventListener('click', (e) => {
-      if (navMenu && !navMenu.contains(e.target) && !mobileToggle.contains(e.target)) {
-        navMenu.classList.remove('is-active');
-        navMenu.style.display = 'none';
+      if (navMenu && navMenu.classList.contains('is-active')) {
+        if (!navMenu.contains(e.target) && !mobileToggle.contains(e.target)) {
+          navMenu.classList.remove('is-active');
+        }
       }
     });
   }
