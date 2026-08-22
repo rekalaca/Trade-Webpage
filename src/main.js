@@ -9,6 +9,8 @@ import { renderBlogPage } from './pages/BlogPage.js';
 import { renderContactPage } from './pages/ContactPage.js';
 import { renderAdminPage } from './pages/AdminPage.js';
 import { renderImpresszumPage } from './pages/ImpresszumPage.js';
+import { renderPrivacyPage } from './pages/PrivacyPage.js';
+import { renderCookieBanner } from './components/CookieBanner.js';
 
 // --- STATE MANAGEMENT ---
 let state = {
@@ -223,6 +225,15 @@ const STATIC_SEARCH_ITEMS = [
     text: 'Telefon: 36 30 346 2848 | Email: demotradekft@gmail.com | Nyitvatartás: H-P 08:00-16:30',
     targetPage: 'contact',
     targetElementId: 'kapcsolat'
+  },
+  {
+    id: 'privacy-info',
+    category: 'Jogi információk',
+    icon: 'fa-solid fa-shield-halved',
+    title: 'Adatkezelési Tájékoztató (GDPR)',
+    text: 'A Demo-Trade Kft. adatkezelési szabályzata, cookie tájékoztató és letölthető hivatalos PDF dokumentum.',
+    targetPage: 'privacy',
+    targetElementId: null
   }
 ];
 
@@ -254,6 +265,10 @@ function render() {
     case 'impresszum':
       mainContent = renderImpresszumPage();
       break;
+    case 'privacy':
+    case 'adatkezeles':
+      mainContent = renderPrivacyPage();
+      break;
     case 'admin':
       mainContent = renderAdminPage(state.posts, state.isLoggedIn, state.editingPostId);
       break;
@@ -267,6 +282,7 @@ function render() {
       ${mainContent}
     </main>
     ${renderFooter()}
+    ${renderCookieBanner()}
   `;
 
   attachEventListeners();
@@ -464,7 +480,7 @@ function initHistoryState() {
     state.activePostId = hash.replace('#blog/', '');
   } else if (hash.startsWith('#') && hash.length > 1) {
     const cleanHash = hash.replace('#', '');
-    if (['home', 'about', 'services', 'blog', 'contact', 'impresszum', 'admin'].includes(cleanHash)) {
+    if (['home', 'about', 'services', 'blog', 'contact', 'impresszum', 'privacy', 'adatkezeles', 'admin'].includes(cleanHash)) {
       state.activePage = cleanHash;
     }
   }
@@ -539,7 +555,7 @@ function attachEventListeners() {
     });
   }
 
-  // Contact Form Submission Handler via Nodemailer API
+  // Contact Form Submission Handler with Anti-bot Honeypot & GDPR verification
   const contactForm = document.getElementById('contact-form');
   if (contactForm) {
     contactForm.addEventListener('submit', async (e) => {
@@ -553,6 +569,30 @@ function attachEventListeners() {
       const phone = document.getElementById('contact-phone')?.value.trim();
       const subject = document.getElementById('contact-subject')?.value;
       const message = document.getElementById('contact-message')?.value.trim();
+      const honeypot = document.getElementById('contact-hp-website')?.value.trim();
+      const privacyConsent = document.getElementById('contact-privacy-consent')?.checked;
+      const formRenderedTime = parseInt(document.getElementById('contact-form-rendered-time')?.value || '0', 10);
+
+      // 1. Anti-bot honeypot check (hidden field only filled by spam bots)
+      if (honeypot) {
+        console.warn('Bot detected via honeypot field.');
+        showToast('Köszönjük érdeklődését! Üzenetét sikeresen továbbítottuk e-mailben!');
+        contactForm.reset();
+        return;
+      }
+
+      // 2. Anti-bot submission speed check (must be at least 1.2 seconds)
+      if (formRenderedTime && Date.now() - formRenderedTime < 1200) {
+        console.warn('Submission too fast, suspected automated bot.');
+        showToast('Kérjük, várjon egy pillanatot az elküldés előtt!', 'error');
+        return;
+      }
+
+      // 3. GDPR Privacy policy acceptance check
+      if (!privacyConsent) {
+        showToast('Kérjük fogadja el az Adatkezelési tájékoztatót a továbbítás előtt!', 'error');
+        return;
+      }
 
       if (!name || !email || !message) {
         showToast('Kérjük töltse ki a kötelező mezőket!', 'error');
@@ -570,7 +610,7 @@ function attachEventListeners() {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name, email, phone, subject, message })
+          body: JSON.stringify({ name, email, phone, subject, message, honeypot, privacyConsent })
         });
 
         const result = await response.json();
@@ -591,6 +631,48 @@ function attachEventListeners() {
           submitBtn.innerHTML = origBtnText;
         }
       }
+    });
+  }
+
+  // --- COOKIE BANNER EVENT HANDLERS ---
+  const cookieAcceptAllBtn = document.getElementById('cookie-accept-all-btn');
+  if (cookieAcceptAllBtn) {
+    cookieAcceptAllBtn.addEventListener('click', () => {
+      localStorage.setItem('demotrade_cookie_consent', 'all');
+      const banner = document.getElementById('cookie-banner');
+      if (banner) {
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(30px)';
+        banner.style.transition = 'all 0.3s ease';
+        setTimeout(() => banner.remove(), 300);
+      }
+      showToast('Sütik és adatvédelmi beállítások elmentve!');
+    });
+  }
+
+  const cookieEssentialBtn = document.getElementById('cookie-essential-btn');
+  if (cookieEssentialBtn) {
+    cookieEssentialBtn.addEventListener('click', () => {
+      localStorage.setItem('demotrade_cookie_consent', 'essential');
+      const banner = document.getElementById('cookie-banner');
+      if (banner) {
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(30px)';
+        banner.style.transition = 'all 0.3s ease';
+        setTimeout(() => banner.remove(), 300);
+      }
+      showToast('Csak a működéshez elengedhetetlen sütik engedélyezve.');
+    });
+  }
+
+  // Re-open cookie banner from footer
+  const footerCookieBtn = document.getElementById('footer-cookie-btn');
+  if (footerCookieBtn) {
+    footerCookieBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('demotrade_cookie_consent');
+      render();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     });
   }
 

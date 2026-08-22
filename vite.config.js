@@ -20,6 +20,21 @@ export default defineConfig({
                   return res.end(JSON.stringify({ success: false, message: 'Kérjük töltse ki a kötelező mezőket!' }));
                 }
 
+                // Spam Bot Honeypot check
+                if (data.honeypot) {
+                  console.warn('Bot submission blocked via Honeypot trap.');
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  return res.end(JSON.stringify({ success: true, message: 'Köszönjük! Üzenetét sikeresen továbbítottuk e-mailben.' }));
+                }
+
+                // GDPR Privacy consent check
+                if (data.privacyConsent === false) {
+                  res.statusCode = 400;
+                  res.setHeader('Content-Type', 'application/json');
+                  return res.end(JSON.stringify({ success: false, message: 'Kérjük fogadja el az Adatkezelési tájékoztatót!' }));
+                }
+
                 // SMTP configuration from user credentials
                 const transporter = nodemailer.createTransport({
                   host: 'smtp.gmail.com',
@@ -33,7 +48,7 @@ export default defineConfig({
 
                 const mailOptions = {
                   from: `"Demo-Trade Weboldal" <demotradekft@gmail.com>`,
-                  to: 'rekalaca@gmail.com',
+                  to: 'demotradekft@gmail.com',
                   replyTo: `"${data.name}" <${data.email}>`,
                   subject: `[Demo-Trade Kapcsolat] - ${data.subject || 'Új érdeklődés'}`,
                   html: `

@@ -94,6 +94,23 @@ export function renderContactSection() {
                 <textarea id="contact-message" class="form-control" placeholder="Írja meg üzenetét részletesen..." required></textarea>
               </div>
 
+              <!-- LÁTHATATLAN HONEYPOT MEZŐ SPAM ROBOTOK ELLEN (CSS-el és ARIA-val elrejtve) -->
+              <div class="security-hp-field" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;" aria-hidden="true">
+                <label for="contact-hp-website">Kérjük, hagyja üresen ezt a mezőt:</label>
+                <input type="text" id="contact-hp-website" name="company_website_hp" tabindex="-1" autocomplete="off" />
+                <input type="hidden" id="contact-form-rendered-time" value="${Date.now()}" />
+              </div>
+
+              <!-- ADATKEZELÉSI HOZZÁJÁRULÁS CHECKBOX -->
+              <div class="form-group" style="margin-top: 1.2rem; margin-bottom: 1.5rem;">
+                <label class="custom-checkbox-container" style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; font-size: 0.9rem; color: var(--gray-700); line-height: 1.5;">
+                  <input type="checkbox" id="contact-privacy-consent" required style="margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;" />
+                  <span>
+                    Elolvastam és elfogadom az <a href="#" data-page="privacy" style="color: var(--primary); text-decoration: underline; font-weight: 700;">Adatkezelési tájékoztatót</a>, és hozzájárulok a megadott személyes adataim kapcsolatfelvételi célú kezeléséhez. *
+                  </span>
+                </label>
+              </div>
+
               <button type="submit" class="btn btn-primary" id="contact-submit-btn" style="width: 100%; font-size: 1.05rem;">
                 <i class="fa-solid fa-paper-plane"></i> Üzenet küldése
               </button>

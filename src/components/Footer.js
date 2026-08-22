@@ -20,6 +20,7 @@ export function renderFooter() {
               <li><a href="#" data-page="home" data-section="szolgaltatasok">Szolgáltatások</a></li>
               <li><a href="#" data-page="blog">Blog &amp; Hírek</a></li>
               <li><a href="#" data-page="home" data-section="kapcsolat">Kapcsolat</a></li>
+              <li><a href="#" data-page="privacy" style="color: var(--gray-400);">Adatkezelési tájékoztató</a></li>
               <li><a href="#" data-page="impresszum" style="color: var(--gray-400);">Impresszum</a></li>
             </ul>
           </div>
@@ -43,8 +44,12 @@ export function renderFooter() {
           <div>
             design by: <a href="https://www.rekalaca-webdesign.hu/" target="_blank" rel="noopener" style="color: #5ce685; text-decoration: underline; font-weight: 600;">rekalaca-webdesign</a>
           </div>
-          <div style="display: flex; gap: 1.5rem; align-items: center;">
+          <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+            <a href="#" data-page="privacy" style="color: var(--gray-400); text-decoration: underline;">Adatkezelés</a>
             <a href="#" data-page="impresszum" style="color: var(--gray-400); text-decoration: underline;">Impresszum</a>
+            <a href="#" id="footer-cookie-btn" style="color: var(--gray-400); text-decoration: underline; cursor: pointer;">
+              <i class="fa-solid fa-cookie-bite"></i> Sütik
+            </a>
             <a href="#" id="footer-admin-btn" style="color: var(--gray-400); text-decoration: underline; display: flex; align-items: center; gap: 0.4rem;">
               <i class="fa-solid fa-lock"></i> Admin
             </a>
