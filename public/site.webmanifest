@@ -1,0 +1,21 @@
+{
+  "name": "Demo-Trade Kft. Szaktanácsadás",
+  "short_name": "Demo-Trade",
+  "description": "Akkreditált Mezőgazdasági és Vidékfejlesztési Szaktanácsadási Központ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1b4d3e",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

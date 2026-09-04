@@ -10,6 +10,7 @@ import { renderContactPage } from './pages/ContactPage.js';
 import { renderAdminPage } from './pages/AdminPage.js';
 import { renderImpresszumPage } from './pages/ImpresszumPage.js';
 import { renderPrivacyPage } from './pages/PrivacyPage.js';
+import { renderNotFoundPage } from './pages/NotFoundPage.js';
 import { renderCookieBanner } from './components/CookieBanner.js';
 
 // --- STATE MANAGEMENT ---
@@ -272,8 +273,11 @@ function render() {
     case 'admin':
       mainContent = renderAdminPage(state.posts, state.isLoggedIn, state.editingPostId);
       break;
+    case 'not-found':
+      mainContent = renderNotFoundPage();
+      break;
     default:
-      mainContent = renderHomePage(state.posts);
+      mainContent = renderNotFoundPage();
   }
 
   app.innerHTML = `
@@ -463,26 +467,106 @@ function setPageState(page, postId = null, push = true) {
   state.activePostId = postId;
 
   if (push) {
-    let hash = '#';
+    let url = '/';
     if (page === 'blog' && postId) {
-      hash = `#blog/${postId}`;
+      url = `/#blog/${postId}`;
     } else if (page && page !== 'home') {
-      hash = `#${page}`;
+      url = `/#${page}`;
     }
-    window.history.pushState({ page, postId }, '', hash);
+    window.history.pushState({ page, postId }, '', url);
   }
 }
 
 function initHistoryState() {
-  const hash = window.location.hash;
-  if (hash.startsWith('#blog/')) {
-    state.activePage = 'blog';
-    state.activePostId = hash.replace('#blog/', '');
-  } else if (hash.startsWith('#') && hash.length > 1) {
-    const cleanHash = hash.replace('#', '');
-    if (['home', 'about', 'services', 'blog', 'contact', 'impresszum', 'privacy', 'adatkezeles', 'admin'].includes(cleanHash)) {
-      state.activePage = cleanHash;
+  const hash = (window.location.hash || '').trim();
+  const rawPathname = (window.location.pathname || '').replace(/^\/+|\/+$/g, '').trim();
+
+  // 1. Check Hash first if present and not just "#"
+  if (hash && hash !== '#') {
+    if (hash.startsWith('#blog/')) {
+      const postId = hash.replace('#blog/', '').trim();
+      const postExists = state.posts.some(p => p.id === postId);
+      if (postExists) {
+        state.activePage = 'blog';
+        state.activePostId = postId;
+      } else {
+        state.activePage = 'not-found';
+        state.activePostId = null;
+      }
+      return;
     }
+
+    const cleanHash = hash.replace('#', '').toLowerCase();
+    const hashRouteMap = {
+      '': 'home',
+      'home': 'home',
+      'about': 'home',
+      'rolunk': 'home',
+      'services': 'home',
+      'szolgaltatasok': 'home',
+      'blog': 'blog',
+      'hirek': 'blog',
+      'contact': 'contact',
+      'kapcsolat': 'contact',
+      'impresszum': 'impresszum',
+      'privacy': 'privacy',
+      'adatkezeles': 'privacy',
+      'admin': 'admin'
+    };
+
+    if (hashRouteMap[cleanHash] !== undefined) {
+      state.activePage = hashRouteMap[cleanHash];
+      state.activePostId = null;
+    } else {
+      state.activePage = 'not-found';
+      state.activePostId = null;
+    }
+    return;
+  }
+
+  // 2. If no hash, check Pathname (e.g. /rolunk, /blog, /nemletezo, /404)
+  if (!rawPathname || rawPathname === 'index.html') {
+    state.activePage = 'home';
+    state.activePostId = null;
+    return;
+  }
+
+  if (rawPathname.startsWith('blog/')) {
+    const postId = rawPathname.replace('blog/', '').trim();
+    const postExists = state.posts.some(p => p.id === postId);
+    if (postExists) {
+      state.activePage = 'blog';
+      state.activePostId = postId;
+    } else {
+      state.activePage = 'not-found';
+      state.activePostId = null;
+    }
+    return;
+  }
+
+  const pathRouteMap = {
+    'home': 'home',
+    'about': 'home',
+    'rolunk': 'home',
+    'services': 'home',
+    'szolgaltatasok': 'home',
+    'blog': 'blog',
+    'hirek': 'blog',
+    'contact': 'contact',
+    'kapcsolat': 'contact',
+    'impresszum': 'impresszum',
+    'privacy': 'privacy',
+    'adatkezeles': 'privacy',
+    'admin': 'admin'
+  };
+
+  const cleanPath = rawPathname.toLowerCase();
+  if (pathRouteMap[cleanPath] !== undefined) {
+    state.activePage = pathRouteMap[cleanPath];
+    state.activePostId = null;
+  } else {
+    state.activePage = 'not-found';
+    state.activePostId = null;
   }
 }
 

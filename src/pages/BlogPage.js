@@ -1,9 +1,13 @@
+import { renderNotFoundPage } from './NotFoundPage.js';
+
 export function renderBlogPage(posts, activePostId, searchTerm = '', selectedCategory = 'all', currentPage = 1) {
   // If an active article is selected, render Single Article view
   if (activePostId) {
     const post = posts.find(p => p.id === activePostId);
-    if (post) {
-      return `
+    if (!post) {
+      return renderNotFoundPage();
+    }
+    return `
         <div class="container" style="padding-top: 3rem; padding-bottom: 5rem;">
           <button class="btn btn-outline back-to-blog-btn" style="margin-bottom: 2rem;">
             <i class="fa-solid fa-arrow-left"></i> Vissza a hírekhez
@@ -42,7 +46,6 @@ export function renderBlogPage(posts, activePostId, searchTerm = '', selectedCat
           </div>
         </div>
       `;
-    }
   }
 
   // Filter posts by category & search term
