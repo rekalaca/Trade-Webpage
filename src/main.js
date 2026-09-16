@@ -594,6 +594,7 @@ window.addEventListener('popstate', (e) => {
     initHistoryState();
   }
   render();
+  window.scrollTo(0, 0);
 });
 
 // --- EVENT BINDING ---
@@ -609,8 +610,8 @@ function attachEventListeners() {
         executeTargetNavigation('home', section);
       } else {
         setPageState(page, null, true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         render();
+        window.scrollTo(0, 0);
       }
     });
   });
@@ -788,8 +789,8 @@ function attachEventListeners() {
     footerAdminBtn.addEventListener('click', (e) => {
       e.preventDefault();
       state.activePage = 'admin';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       render();
+      window.scrollTo(0, 0);
     });
   }
 
@@ -996,8 +997,8 @@ function attachEventListeners() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setPageState('home', null, true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         render();
+        window.scrollTo(0, 0);
       }
     });
   }
@@ -1051,8 +1052,8 @@ function attachEventListeners() {
     btn.addEventListener('click', (e) => {
       const postId = btn.getAttribute('data-id');
       setPageState('blog', postId, true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       render();
+      window.scrollTo(0, 0);
     });
   });
 
@@ -1100,6 +1101,7 @@ function attachEventListeners() {
       } else {
         setPageState('blog', null, true);
         render();
+        window.scrollTo(0, 0);
       }
     });
   }
