@@ -1,38 +1,69 @@
-# Vercel Deployment & Git Workflow
+# Vercel Deployment & Git Workflow — Demo-Trade Webpage
 
-Ez a dokumentum rögzíti, hogyan van beállítva a projekt verziókezelése és élesítése, hogy a jövőben (akár hónapok múlva is) egyértelmű legyen a folyamat.
-
-## 📌 A jelenlegi felállás (2026. szeptember)
-- **Biztonsági mentés (Git):** A kód a te saját GitHub fiókodba (`rekalaca/Trade-Webpage`) töltődik fel. Ez garantálja, hogy a kódod felett 100%-os kontrollod van.
-- **Élesítés (Vercel):** A weboldal a Demo Trade céges Vercel fiókjában ("Team" account) él, a `demo-trade-webpage` projekt alatt.
-- **Az ok:** Mivel a Vercel fiók egy céges fiók, biztonsági okokból nem engedi, hogy közvetlenül figyelje a te személyes (`rekalaca`) GitHub fiókodat. Emiatt az automatikus frissítés (Git Push -> Vercel) nem működik.
+Ez a dokumentum részletesen rögzíti a weboldal verziókezelési, élesítési és automatizálási folyamatát.
 
 ---
 
-## 🚀 A fejlesztés és élesítés folyamata (Két lépés)
+## 📌 1. Jelenlegi Felállás és Működés (Manuális Élesítés)
 
-Mivel a két rendszert (Git és Vercel) szétválasztottuk, a munka befejeztével két külön lépést kell végrehajtanod:
+- **Biztonsági mentés (Git):** A kód a saját GitHub fiókodba (`https://github.com/rekalaca/Trade-Webpage.git`) töltődik fel a `main` ágra.
+- **Élesítés (Vercel):** A weboldal a Demo Trade céges Vercel fiókjában ("Team" account) fut, a `demo-trade-webpage` projekt alatt (`demotradekft.hu`).
+- **Miért kell most még manuálisan tolni?** A céges Vercel fiók közvetlenül nem éri el a személyes (`rekalaca`) GitHub tárolót. Ezért amíg a céges GitHub hozzáférés nincs meg, a Vercel CLI-vel toljuk fel az éles verziót.
 
-### 1. Lépés: Biztonsági mentés (Git)
-Mentsd el a munkádat a szokásos módon a GitHubra. (Vagy a VS Code Git felületén, vagy terminálból):
+### A napi munka menete most:
+
+#### 1. Lépés: Mentés a GitHubra
 ```bash
 git add .
-git commit -m "Módosítások leírása"
+git commit -m "Frissítések leírása"
 git push
 ```
-*(Ezzel a kód felkerül a `rekalaca` GitHubra, így megvan a mentésed).*
 
-### 2. Lépés: Élesítés a weboldalon (Vercel CLI)
-Hogy a változások kimenjenek a `demotradekft.hu` weboldalra, egyenesen a gépedről kell fellőnöd a kódot a Vercelre az alábbi paranccsal a terminálban:
+#### 2. Lépés: Élesítés a Vercelen (CLI)
 ```bash
+# 1. Ha a bejelentkezés lejárt volna:
+npx vercel login
+
+# 2. Élesítés a demotradekft.hu-ra:
 npx vercel --prod
 ```
-Ezután a Vercel másodpercek alatt legenerálja (Building...) és publikálja az oldalt. 
-*(Ha esetleg kijelentkeztél volna a Vercelből, az `npx vercel login` paranccsal tudsz újra belépni).*
 
 ---
 
-## 🌐 DNS Beállítások (demotradekft.hu)
-Ha bármikor a jövőben újra be kellene állítani a domaint a tárhelyszolgáltatónál, a Vercelhez az alábbi DNS rekordok szükségesek:
-- **A rekord (fő domain: `@`):** `76.76.21.21` (vagy az egyedi `216.198.79.1`)
-- **CNAME (www aldomain: `www`):** `cname.vercel-dns.com` (vagy az egyedi `f1de239947a141df.vercel-dns-017.com`)
+## ⚡ 2. Jövőbeli Automatikus Élesítés Beállítása (Amikor megvan a hozzáférés)
+
+Amikor megkapod a hozzáférést a `demotrade` GitHub fiókhoz (ahogyan a belső `Trade` CRM rendszernél is működik), az alábbi 3 lépéssel elérhető a 100%-ban automatikus élesítés:
+
+### 1. Lépés: Új tároló létrehozása a céges GitHubon
+1. Lépj be a **demotrade** GitHub fiókba.
+2. Hozz létre egy új tárolót: `Trade-Webpage` (vagy `demo-trade-webpage`).
+3. Ha a tároló privát: a *Settings -> Collaborators* menüpontban add hozzá a `rekalaca` felhasználót írási (Write/Admin) jogosultsággal.
+
+### 2. Lépés: Összekapcsolás a Vercel vezérlőpulton
+1. Nyisd meg a [vercel.com](https://vercel.com) oldalt a Demo Trade céges fiókkal.
+2. Nyisd meg a **demo-trade-webpage** projektet.
+3. Menj a **Settings** ➔ **Git** menüpontba.
+4. Kattints a **Connect Git Repository** gombra, és válaszd ki a friss `demotrade/Trade-Webpage` tárolót.
+
+### 3. Lépés: Kettős Git Push beállítása a helyi gépen
+A terminálban a projekt mappájában (`Trade-Webpage`) futtasd az alábbi parancsokat, hogy a `git push` egyszerre mindkét helyre töltsön:
+
+```bash
+# Remote hozzáadása és kettős push URL beállítása az 'origin' alá:
+git remote set-url --add --push origin https://github.com/rekalaca/Trade-Webpage.git
+git remote set-url --add --push origin https://github.com/demotrade/Trade-Webpage.git
+```
+
+#### Eredmény:
+Ezután egyetlen sima `git push` parancs lefutásakor:
+1. Feltöltődik a kód a **saját GitHubodra** (`rekalaca/Trade-Webpage`) biztonsági mentésként.
+2. Feltöltődik a kód a **céges GitHubra** (`demotrade/Trade-Webpage`).
+3. A Vercel **10 másodpercen belül teljesen automatikusan legenerálja és élesíti** a `demotradekft.hu` oldalt, külön Vercel parancs nélkül!
+
+---
+
+## 🌐 3. DNS & Domain Beállítások (demotradekft.hu)
+
+A tárhelyszolgáltatónál (Rackhost / Domain regisztrátor) az alábbi DNS rekordok mutatnak a Vercel szervereire:
+- **A rekord (fő domain: `@`):** `76.76.21.21` (vagy `216.198.79.1`)
+- **CNAME (www aldomain: `www`):** `cname.vercel-dns.com` (vagy `f1de239947a141df.vercel-dns-017.com`)
