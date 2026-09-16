@@ -70,20 +70,16 @@ export function renderHomePage(posts) {
         <div class="about-grid-container">
           <!-- BAL OLDALI DIV: Cégvezetés, Leírás, 15 elemű felsorolás -->
           <div class="about-col-left reveal-on-scroll slide-in-left">
-            <div class="about-header-bar">
-              <div class="about-header-icon">
-                <i class="fa-solid fa-building-columns"></i>
-              </div>
-              <div>
-                <h3 class="about-main-title">Szakmai szaktanácsadási központ</h3>
-                <p class="about-sub-title">Akkreditált Uniós Szaktanácsadási Rendszer | Közel 15 év szakmai tapasztalat</p>
-              </div>
+            <div class="about-header-bar about-header-bar-centered">
+              <h3 class="about-main-title">
+                <span>Szakmai</span>
+                <span>szaktanácsadási</span>
+                <span>központ</span>
+              </h3>
+              <p class="about-sub-title">Akkreditált Uniós Szaktanácsadási Rendszer | Közel 15 év szakmai tapasztalat</p>
             </div>
 
             <div class="about-bio-box">
-              <div class="about-bio-icon">
-                <i class="fa-solid fa-user-tie"></i>
-              </div>
               <div class="about-bio-content">
                 <h4>Cégvezetés & Szakmai Hátterünk</h4>
                 <p>A Demo-Trade Kft. szaktanácsadási tevékenységét közel másfél évtizede, <strong>2007-ben kezdte</strong>. Cégünk vezetője <strong>Moravszki Gábor</strong>, mezőgazdasági szaktanácsadó, növényvédelmi szakmérnök.</p>
@@ -183,8 +179,10 @@ export function renderHomePage(posts) {
         <div class="services-grid">
           <!-- CARD 1 -->
           <div class="service-card reveal-on-scroll slide-in-left" id="service-szaktanacsadas">
-            <div class="service-icon-wrapper"><i class="fa-solid fa-wheat-awn"></i></div>
-            <h3>Mezőgazdasági szaktanácsadás</h3>
+            <div class="service-card-header">
+              <div class="service-icon-wrapper"><i class="fa-solid fa-wheat-awn"></i></div>
+              <h3>Mezőgazdasági szaktanácsadás</h3>
+            </div>
             <p>A gazdálkodást segítő információk átadásán túl számos szolgáltatással segítjük a gazdálkodókat.</p>
 
             <button class="btn btn-outline open-service-modal" data-service-idx="0" style="margin-top: auto; width: 100%;">
@@ -194,8 +192,10 @@ export function renderHomePage(posts) {
 
           <!-- CARD 2 -->
           <div class="service-card reveal-on-scroll slide-in-left" id="service-novenyvedelem">
-            <div class="service-icon-wrapper"><i class="fa-solid fa-microscope"></i></div>
-            <h3>Növényvédelmi tanácsadás</h3>
+            <div class="service-card-header">
+              <div class="service-icon-wrapper"><i class="fa-solid fa-microscope"></i></div>
+              <h3>Növényvédelmi tanácsadás</h3>
+            </div>
             <p>A növényvédelmi biolabor üzemeltetése, meteorológiai állomások, növényvédelmi előrejelzéseken túl heti hírlevéllel segítjük a munkát.</p>
 
             <button class="btn btn-outline open-service-modal" data-service-idx="1" style="margin-top: auto; width: 100%;">
@@ -205,8 +205,10 @@ export function renderHomePage(posts) {
 
           <!-- CARD 3 -->
           <div class="service-card reveal-on-scroll slide-in-right" id="service-palyazatok">
-            <div class="service-icon-wrapper"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-            <h3>Mezőgazdasági jellegű pályázatok</h3>
+            <div class="service-card-header">
+              <div class="service-icon-wrapper"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+              <h3>Mezőgazdasági jellegű pályázatok</h3>
+            </div>
             <p>A pályázatok figyelése, pályázatok készítése és menedzselése is feladataink közé tartozik.</p>
 
             <button class="btn btn-outline open-service-modal" data-service-idx="2" style="margin-top: auto; width: 100%;">
@@ -216,8 +218,10 @@ export function renderHomePage(posts) {
 
           <!-- CARD 4 -->
           <div class="service-card reveal-on-scroll slide-in-right" id="service-permetezo">
-            <div class="service-icon-wrapper"><i class="fa-solid fa-spray-can-sparkles"></i></div>
-            <h3>Permetezőgépek műszaki felülvizsgálata</h3>
+            <div class="service-card-header">
+              <div class="service-icon-wrapper"><i class="fa-solid fa-spray-can-sparkles"></i></div>
+              <h3>Permetezőgépek műszaki felülvizsgálata</h3>
+            </div>
             <p>Mobil vizsgaállomásunkkal a permetezőgépek időszakos műszaki felülvizsgálatában is ügyfeleink rendelkezésére állunk.</p>
 
             <button class="btn btn-outline open-service-modal" data-service-idx="3" style="margin-top: auto; width: 100%;">

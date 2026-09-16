@@ -67,7 +67,7 @@ export function renderContactSection() {
                 <input type="text" id="contact-name" class="form-control" placeholder="Az Ön teljes neve" required />
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-grid-2col">
                 <div class="form-group">
                   <label for="contact-email">E-mail cím *</label>
                   <input type="email" id="contact-email" class="form-control" placeholder="minta@domain.hu" required />

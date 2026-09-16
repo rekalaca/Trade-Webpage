@@ -426,15 +426,24 @@ function openServiceModal(data) {
   backdrop.style.display = 'flex';
   void backdrop.offsetWidth;
   backdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Push history state so browser/mobile back button gracefully closes modal without 404
+  window.history.pushState({ modalOpen: true, page: state.activePage, postId: state.activePostId }, '', window.location.href);
 }
 
-function closeServiceModal() {
+function closeServiceModal(triggerBack = false) {
   const backdrop = document.getElementById('service-modal-backdrop');
-  if (backdrop) {
+  if (backdrop && backdrop.classList.contains('open')) {
     backdrop.classList.remove('open');
+    document.body.style.overflow = '';
     setTimeout(() => {
       backdrop.style.display = 'none';
     }, 350);
+
+    if (triggerBack && window.history.state && window.history.state.modalOpen) {
+      window.history.back();
+    }
   }
 }
 
@@ -490,7 +499,7 @@ function initHistoryState() {
         state.activePage = 'blog';
         state.activePostId = postId;
       } else {
-        state.activePage = 'not-found';
+        state.activePage = 'blog';
         state.activePostId = null;
       }
       return;
@@ -518,7 +527,8 @@ function initHistoryState() {
       state.activePage = hashRouteMap[cleanHash];
       state.activePostId = null;
     } else {
-      state.activePage = 'not-found';
+      // Safe fallback for in-page anchors
+      state.activePage = 'home';
       state.activePostId = null;
     }
     return;
@@ -538,7 +548,7 @@ function initHistoryState() {
       state.activePage = 'blog';
       state.activePostId = postId;
     } else {
-      state.activePage = 'not-found';
+      state.activePage = 'blog';
       state.activePostId = null;
     }
     return;
@@ -571,6 +581,12 @@ function initHistoryState() {
 }
 
 window.addEventListener('popstate', (e) => {
+  const backdrop = document.getElementById('service-modal-backdrop');
+  if (backdrop && backdrop.classList.contains('open')) {
+    closeServiceModal(false);
+    return;
+  }
+
   if (e.state && e.state.page) {
     state.activePage = e.state.page;
     state.activePostId = e.state.postId || null;
@@ -617,13 +633,13 @@ function attachEventListeners() {
   const modalContactBtn = document.getElementById('modal-contact-btn');
 
   if (modalCloseBtn) {
-    modalCloseBtn.addEventListener('click', closeServiceModal);
+    modalCloseBtn.addEventListener('click', () => closeServiceModal(true));
   }
 
   if (modalBackdrop) {
     modalBackdrop.addEventListener('click', (e) => {
       if (e.target === modalBackdrop) {
-        closeServiceModal();
+        closeServiceModal(true);
       }
     });
   }
@@ -631,7 +647,7 @@ function attachEventListeners() {
   if (modalContactBtn) {
     modalContactBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      closeServiceModal();
+      closeServiceModal(true);
       setTimeout(() => {
         setPageState('home', null, true);
         executeTargetNavigation('home', 'kapcsolat');
@@ -781,7 +797,57 @@ function attachEventListeners() {
   // --- MENU LIVE SEARCH LOGIC ---
   const menuSearchInput = document.getElementById('menu-search-input');
   const searchDropdown = document.getElementById('search-dropdown');
-  const clearSearchBtn = document.getElementById('clear-menu-search');
+  const navSearchBtn = document.getElementById('nav-search-btn');
+  const searchDropdownBox = document.getElementById('nav-search-dropdown-box');
+  const closeMenuSearchBtn = document.getElementById('close-menu-search');
+
+  if (navSearchBtn && searchDropdownBox) {
+    navSearchBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = searchDropdownBox.style.display === 'block';
+      if (isOpen) {
+        searchDropdownBox.style.display = 'none';
+        navSearchBtn.classList.remove('active');
+      } else {
+        searchDropdownBox.style.display = 'block';
+        navSearchBtn.classList.add('active');
+        setTimeout(() => {
+          if (menuSearchInput) menuSearchInput.focus();
+        }, 50);
+      }
+    });
+
+    if (closeMenuSearchBtn) {
+      closeMenuSearchBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        searchDropdownBox.style.display = 'none';
+        navSearchBtn.classList.remove('active');
+        state.menuSearchTerm = '';
+        if (menuSearchInput) menuSearchInput.value = '';
+        if (searchDropdown) {
+          searchDropdown.style.display = 'none';
+          searchDropdown.innerHTML = '';
+        }
+      });
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('nav-search-container');
+      if (container && !container.contains(e.target)) {
+        searchDropdownBox.style.display = 'none';
+        navSearchBtn.classList.remove('active');
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchDropdownBox) {
+        searchDropdownBox.style.display = 'none';
+        navSearchBtn.classList.remove('active');
+      }
+    });
+  }
 
   if (menuSearchInput && searchDropdown) {
     const handleSearchInput = (val) => {
@@ -869,9 +935,11 @@ function attachEventListeners() {
           const targetElement = itemBtn.getAttribute('data-target-element');
           const postId = itemBtn.getAttribute('data-post-id');
 
+          if (searchDropdownBox) searchDropdownBox.style.display = 'none';
+          if (navSearchBtn) navSearchBtn.classList.remove('active');
+
           if (targetPage === 'blog' && postId) {
             setPageState('blog', postId, true);
-            searchDropdown.style.display = 'none';
             state.menuSearchTerm = '';
             render();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -890,29 +958,6 @@ function attachEventListeners() {
       if (e.target.value.trim()) {
         handleSearchInput(e.target.value);
       }
-    });
-
-    // Close on click outside
-    document.addEventListener('click', (e) => {
-      const container = document.getElementById('nav-search-container');
-      if (container && !container.contains(e.target)) {
-        searchDropdown.style.display = 'none';
-      }
-    });
-
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && searchDropdown) {
-        searchDropdown.style.display = 'none';
-      }
-    });
-  }
-
-  if (clearSearchBtn) {
-    clearSearchBtn.addEventListener('click', () => {
-      state.menuSearchTerm = '';
-      if (menuSearchInput) menuSearchInput.value = '';
-      if (searchDropdown) searchDropdown.style.display = 'none';
     });
   }
 
@@ -964,13 +1009,28 @@ function attachEventListeners() {
     mobileToggle.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+
+      // If search popup is open, close it
+      if (searchDropdownBox) {
+        searchDropdownBox.style.display = 'none';
+        if (navSearchBtn) navSearchBtn.classList.remove('active');
+      }
+
+      const isOpening = !navMenu.classList.contains('is-active');
       navMenu.classList.toggle('is-active');
+      
+      const toggleIcon = document.getElementById('mobile-toggle-icon');
+      if (toggleIcon) {
+        toggleIcon.className = isOpening ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+      }
     });
 
     // Close mobile menu when clicking any nav item
     navMenu.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
         navMenu.classList.remove('is-active');
+        const toggleIcon = document.getElementById('mobile-toggle-icon');
+        if (toggleIcon) toggleIcon.className = 'fa-solid fa-bars';
       });
     });
 
@@ -979,6 +1039,8 @@ function attachEventListeners() {
       if (navMenu && navMenu.classList.contains('is-active')) {
         if (!navMenu.contains(e.target) && !mobileToggle.contains(e.target)) {
           navMenu.classList.remove('is-active');
+          const toggleIcon = document.getElementById('mobile-toggle-icon');
+          if (toggleIcon) toggleIcon.className = 'fa-solid fa-bars';
         }
       }
     });
@@ -993,6 +1055,41 @@ function attachEventListeners() {
       render();
     });
   });
+
+  // Blog Pagination buttons
+  document.querySelectorAll('.blog-page-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pageNum = parseInt(btn.getAttribute('data-page-num'), 10);
+      if (!isNaN(pageNum) && pageNum > 0 && pageNum !== state.currentPage) {
+        state.currentPage = pageNum;
+        render();
+        const blogContainer = document.querySelector('.blog-list-container');
+        if (blogContainer) {
+          const yOffset = -80;
+          const y = blogContainer.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    });
+  });
+
+  // Blog live search input
+  const blogSearchInput = document.getElementById('blog-search');
+  if (blogSearchInput) {
+    blogSearchInput.addEventListener('input', (e) => {
+      state.searchTerm = e.target.value;
+      state.currentPage = 1;
+      render();
+      const input = document.getElementById('blog-search');
+      if (input) {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    });
+  }
 
   // Back to blog listing
   const backBtn = document.querySelector('.back-to-blog-btn');

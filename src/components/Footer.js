@@ -39,18 +39,18 @@ export function renderFooter() {
           </div>
         </div>
 
-        <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 1.5rem; font-size: 0.85rem; color: var(--gray-400);">
-          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Demo-Trade Kft. Minden jog fenntartva.</p>
-          <div>
-            design by: <a href="https://www.rekalaca-webdesign.hu/" target="_blank" rel="noopener" style="color: #5ce685; text-decoration: underline; font-weight: 600;">rekalaca-webdesign</a>
+        <div class="footer-bottom">
+          <p class="footer-copy">&copy; ${new Date().getFullYear()} Demo-Trade Kft. Minden jog fenntartva.</p>
+          <div class="footer-design">
+            design by: <a href="https://www.rekalaca-webdesign.hu/" target="_blank" rel="noopener">rekalaca-webdesign</a>
           </div>
-          <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
-            <a href="#" data-page="privacy" style="color: var(--gray-400); text-decoration: underline;">Adatkezelés</a>
-            <a href="#" data-page="impresszum" style="color: var(--gray-400); text-decoration: underline;">Impresszum</a>
-            <a href="#" id="footer-cookie-btn" style="color: var(--gray-400); text-decoration: underline; cursor: pointer;">
+          <div class="footer-bottom-links">
+            <a href="#" data-page="privacy">Adatkezelés</a>
+            <a href="#" data-page="impresszum">Impresszum</a>
+            <a href="#" id="footer-cookie-btn">
               <i class="fa-solid fa-cookie-bite"></i> Sütik
             </a>
-            <a href="#" id="footer-admin-btn" style="color: var(--gray-400); text-decoration: underline; display: flex; align-items: center; gap: 0.4rem;">
+            <a href="#" id="footer-admin-btn">
               <i class="fa-solid fa-lock"></i> Admin
             </a>
           </div>

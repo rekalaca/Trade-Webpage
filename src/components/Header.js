@@ -19,38 +19,46 @@ export function renderHeader(activePage, searchValue = '') {
           <img src="/images/lap_logo.png" alt="Demo-Trade Kft. Logó" class="brand-logo-img" />
         </a>
 
-        <div class="nav-right-group">
-          <ul class="nav-menu" id="nav-menu">
-            <li class="nav-item">
-              <button data-page="home" data-section="rolunk"><i class="fa-solid fa-users"></i> Rólunk</button>
-            </li>
-            <li class="nav-item">
-              <button data-page="home" data-section="szolgaltatasok"><i class="fa-solid fa-gears"></i> Szolgáltatások</button>
-            </li>
-            <li class="nav-item ${activePage === 'blog' ? 'active' : ''}">
-              <button data-page="blog"><i class="fa-solid fa-newspaper"></i> Blog & Hírek</button>
-            </li>
-            <li class="nav-item">
-              <button data-page="home" data-section="kapcsolat"><i class="fa-solid fa-address-book"></i> Kapcsolat</button>
-            </li>
-          </ul>
+        <!-- DESKTOP NAV MENU -->
+        <ul class="nav-menu" id="nav-menu">
+          <li class="nav-item">
+            <button data-page="home" data-section="rolunk"><i class="fa-solid fa-users"></i> Rólunk</button>
+          </li>
+          <li class="nav-item">
+            <button data-page="home" data-section="szolgaltatasok"><i class="fa-solid fa-gears"></i> Szolgáltatások</button>
+          </li>
+          <li class="nav-item ${activePage === 'blog' ? 'active' : ''}">
+            <button data-page="blog"><i class="fa-solid fa-newspaper"></i> Blog &amp; Hírek</button>
+          </li>
+          <li class="nav-item">
+            <button data-page="home" data-section="kapcsolat"><i class="fa-solid fa-address-book"></i> Kapcsolat</button>
+          </li>
+        </ul>
 
-          <!-- Live Menu Search Bar -->
+        <!-- RIGHT ACTIONS: Search Icon Button + Hamburger Toggle (Side-by-side) -->
+        <div class="nav-actions">
           <div class="nav-search-container" id="nav-search-container">
-            <div class="nav-search-input-wrapper">
-              <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" id="menu-search-input" placeholder="Keresés az oldalon..." autocomplete="off" value="${searchValue}" />
-              ${searchValue ? '<button id="clear-menu-search" class="clear-search-btn" title="Keresés törlése"><i class="fa-solid fa-xmark"></i></button>' : ''}
+            <button class="nav-search-btn" id="nav-search-btn" aria-label="Kereső megnyitása" title="Keresés az oldalon">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            
+            <div class="nav-search-dropdown-box" id="nav-search-dropdown-box" style="display: none;">
+              <div class="nav-search-inner">
+                <i class="fa-solid fa-magnifying-glass search-inner-icon"></i>
+                <input type="text" id="menu-search-input" placeholder="Keresés hírekben, szolgáltatásokban..." autocomplete="off" value="${searchValue}" />
+                <button id="close-menu-search" class="close-search-btn" title="Kereső bezárása" aria-label="Bezárás">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="search-dropdown" id="search-dropdown" style="display: none;"></div>
             </div>
-            <div class="search-dropdown" id="search-dropdown" style="display: none;"></div>
           </div>
-        </div>
 
-        <button class="mobile-toggle" id="mobile-toggle">
-          <i class="fa-solid fa-bars"></i>
-        </button>
+          <button class="mobile-toggle" id="mobile-toggle" aria-label="Menü megnyitása">
+            <i class="fa-solid fa-bars" id="mobile-toggle-icon"></i>
+          </button>
+        </div>
       </div>
     </nav>
   `;
 }
-

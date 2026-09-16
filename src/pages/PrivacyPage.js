@@ -1,6 +1,6 @@
 export function renderPrivacyPage() {
   return `
-    <section class="section" style="background: #f8fafc; padding: 5rem 0; min-height: 80vh;">
+    <section class="section page-section" style="background: #f8fafc; padding: calc(80px + 2.5rem) 0 5rem; min-height: 80vh;">
       <div class="container" style="max-width: 960px;">
         <div class="section-title" style="text-align: left; max-width: 100%; margin-bottom: 2.5rem;">
           <span class="subtitle">JOGI DOKUMENTUM</span>
