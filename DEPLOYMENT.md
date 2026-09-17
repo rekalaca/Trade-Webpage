@@ -4,61 +4,42 @@ Ez a dokumentum részletesen rögzíti a weboldal verziókezelési, élesítési
 
 ---
 
-## 📌 1. Jelenlegi Felállás és Működés (Manuális Élesítés)
+## 🚀 1. Működési Folyamat (Automatikus Élesítés Dual-Push-sal)
 
-- **Biztonsági mentés (Git):** A kód a saját GitHub fiókodba (`https://github.com/rekalaca/Trade-Webpage.git`) töltődik fel a `main` ágra.
-- **Élesítés (Vercel):** A weboldal a Demo Trade céges Vercel fiókjában ("Team" account) fut, a `demo-trade-webpage` projekt alatt (`demotradekft.hu`).
-- **Miért kell most még manuálisan tolni?** A céges Vercel fiók közvetlenül nem éri el a személyes (`rekalaca`) GitHub tárolót. Ezért amíg a céges GitHub hozzáférés nincs meg, a Vercel CLI-vel toljuk fel az éles verziót.
+A rendszer mostantól **teljesen automatikusan** működik:
 
-### A napi munka menete most:
+- **Biztonsági mentés (Saját Git):** `https://github.com/rekalaca/Trade-Webpage.git`
+- **Céges tároló (DemoTrade Git):** `https://github.com/demotrade/demo-trade-webpage.git`
+- **Élesítés (Vercel):** A weboldal a Demo Trade céges Vercel fiókjában automatikusan buildelődik a `demotrade/demo-trade-webpage` `main` ágának változásakor (`demotradekft.hu`).
 
-#### 1. Lépés: Mentés a GitHubra
+---
+
+### A napi munka menete (Szuper egyszerű):
+
+Csak a szokásos git parancsokat kell használnod:
+
 ```bash
 git add .
 git commit -m "Frissítések leírása"
 git push
 ```
 
-#### 2. Lépés: Élesítés a Vercelen (CLI)
-```bash
-# 1. Ha a bejelentkezés lejárt volna:
-npx vercel login
-
-# 2. Élesítés a demotradekft.hu-ra:
-npx vercel --prod
-```
+#### Mi történik a háttérben egyetlen `git push` hatására?
+1. Feltöltődik a kód a **saját GitHubodra** (`rekalaca/Trade-Webpage`).
+2. Feltöltődik a kód a **céges GitHubra** (`demotrade/demo-trade-webpage`).
+3. A Vercel **másodperceken belül automatikusan felépíti és élesíti** a `demotradekft.hu` oldalt.
 
 ---
 
-## ⚡ 2. Jövőbeli Automatikus Élesítés Beállítása (Amikor megvan a hozzáférés)
+## ⚡ 2. Vercel Összekapcsolás Lépései (Egyszeri beállítás)
 
-Amikor megkapod a hozzáférést a `demotrade` GitHub fiókhoz (ahogyan a belső `Trade` CRM rendszernél is működik), az alábbi 3 lépéssel elérhető a 100%-ban automatikus élesítés:
+Ha a Vercelen még nincs összekötve a GitHub tároló:
 
-### 1. Lépés: Új tároló létrehozása a céges GitHubon
-1. Lépj be a **demotrade** GitHub fiókba.
-2. Hozz létre egy új tárolót: `Trade-Webpage` (vagy `demo-trade-webpage`).
-3. Ha a tároló privát: a *Settings -> Collaborators* menüpontban add hozzá a `rekalaca` felhasználót írási (Write/Admin) jogosultsággal.
-
-### 2. Lépés: Összekapcsolás a Vercel vezérlőpulton
-1. Nyisd meg a [vercel.com](https://vercel.com) oldalt a Demo Trade céges fiókkal.
-2. Nyisd meg a **demo-trade-webpage** projektet.
-3. Menj a **Settings** ➔ **Git** menüpontba.
-4. Kattints a **Connect Git Repository** gombra, és válaszd ki a friss `demotrade/Trade-Webpage` tárolót.
-
-### 3. Lépés: Kettős Git Push beállítása a helyi gépen
-A terminálban a projekt mappájában (`Trade-Webpage`) futtasd az alábbi parancsokat, hogy a `git push` egyszerre mindkét helyre töltsön:
-
-```bash
-# Remote hozzáadása és kettős push URL beállítása az 'origin' alá:
-git remote set-url --add --push origin https://github.com/rekalaca/Trade-Webpage.git
-git remote set-url --add --push origin https://github.com/demotrade/Trade-Webpage.git
-```
-
-#### Eredmény:
-Ezután egyetlen sima `git push` parancs lefutásakor:
-1. Feltöltődik a kód a **saját GitHubodra** (`rekalaca/Trade-Webpage`) biztonsági mentésként.
-2. Feltöltődik a kód a **céges GitHubra** (`demotrade/Trade-Webpage`).
-3. A Vercel **10 másodpercen belül teljesen automatikusan legenerálja és élesíti** a `demotradekft.hu` oldalt, külön Vercel parancs nélkül!
+1. Nyisd meg a [vercel.com](https://vercel.com) felületet a Demo Trade céges fiókkal.
+2. Kattints a **demo-trade-webpage** projektre.
+3. Menj a felső menüben a **Settings** ➔ **Git** menüpontba.
+4. A **Connected Git Repository** résznél válaszd ki a **`demotrade/demo-trade-webpage`** tárolót (Branch: `main`).
+5. Kész! Innentől kezdve minden push automatikusan élesíti a weboldalt.
 
 ---
 
