@@ -9,7 +9,7 @@ import { renderBlogPage } from './pages/BlogPage.js';
 import { renderContactPage } from './pages/ContactPage.js';
 import { renderCareerPage } from './pages/CareerPage.js';
 import { renderProductsPage } from './pages/ProductsPage.js';
-import { renderAdminPage } from './pages/AdminPage.js';
+import { renderAdminPage, CATEGORY_OPTIONS_BY_TYPE, renderPasswordEyeSvg } from './pages/AdminPage.js';
 import { renderImpresszumPage } from './pages/ImpresszumPage.js';
 import { renderPrivacyPage } from './pages/PrivacyPage.js';
 import { renderNotFoundPage } from './pages/NotFoundPage.js';
@@ -40,6 +40,14 @@ function isStagingUnlocked() {
   return sessionStorage.getItem('demotrade_preview_unlocked') === 'true' || state.isLoggedIn;
 }
 
+function getPostsSignature(list) {
+  if (!Array.isArray(list)) return '';
+  return [...list]
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)))
+    .map(p => `${p.id}_${p.title || ''}_${p.category || ''}_${p.price || ''}_${(p.excerpt || '').length}_${(p.content || '').length}`)
+    .join('|');
+}
+
 // Background sync from Supabase Pro database
 async function syncPostsFromSupabase() {
   try {
@@ -49,15 +57,16 @@ async function syncPostsFromSupabase() {
       .order('created_at', { ascending: false });
 
     if (!error && data && data.length > 0) {
-      // Compare content signatures to detect if database data ACTUALLY changed
-      const currentSignature = (state.posts || []).map(p => `${p.id}_${p.updated_at || p.date}_${p.title}`).join('|');
-      const incomingSignature = data.map(p => `${p.id}_${p.updated_at || p.date}_${p.title}`).join('|');
+      // Compare order-independent content signatures to detect if database data ACTUALLY changed
+      const currentSignature = getPostsSignature(state.posts);
+      const incomingSignature = getPostsSignature(data);
 
       state.posts = data;
       localStorage.setItem('demotrade_posts', JSON.stringify(data));
 
-      // ONLY re-render if the database content differs from current loaded posts
-      if (currentSignature !== incomingSignature) {
+      // ONLY re-render if the database content differs AND the active page actually displays posts
+      const postDependentPages = ['blog', 'career', 'karrier', 'allas', 'products', 'termekek', 'admin'];
+      if (currentSignature !== incomingSignature && postDependentPages.includes(state.activePage)) {
         render();
       }
     }
@@ -71,12 +80,6 @@ function loadPosts() {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      const todayDate = new Date().toLocaleDateString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\s/g, '');
-      const careerItem = parsed.find(p => p.id === 'karrier-mezogazdasagi-szaktanacsado');
-      if (careerItem && careerItem.date !== todayDate) {
-        careerItem.date = todayDate;
-        localStorage.setItem('demotrade_posts', JSON.stringify(parsed));
-      }
 
       // Ensure initial career and fruit tree sapling product entries are present
       const hasCareer = parsed.some(p => p.id === 'karrier-mezogazdasagi-szaktanacsado');
@@ -133,18 +136,159 @@ function savePosts(posts, postToSync = null) {
   }
 }
 
-function showToast(message, type = 'success') {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
+// --- UNIFIED MODAL SYSTEM (Replaces browser alerts, confirms, prompts & toasts) ---
+function showModalDialog({
+  type = 'success',
+  title = null,
+  message = '',
+  confirmText = 'Rendben',
+  cancelText = null,
+  showInput = false,
+  inputDefault = '',
+  inputPlaceholder = ''
+}) {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('app-dialog-backdrop');
+    if (existing) existing.remove();
 
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'circle-check' : 'triangle-exclamation'}"></i> ${message}`;
-  document.body.appendChild(toast);
+    const defaultTitles = {
+      success: 'Sikeres művelet',
+      error: 'Figyelmeztetés / Hiba',
+      warning: 'Megerősítés szükséges',
+      confirm: 'Megerősítés szükséges',
+      info: 'Tájékoztatás',
+      prompt: 'Adat megadása'
+    };
 
-  setTimeout(() => {
-    toast.remove();
-  }, 3500);
+    const icons = {
+      success: 'fa-solid fa-circle-check',
+      error: 'fa-solid fa-triangle-exclamation',
+      warning: 'fa-solid fa-circle-exclamation',
+      confirm: 'fa-solid fa-circle-question',
+      info: 'fa-solid fa-circle-info',
+      prompt: 'fa-solid fa-link'
+    };
+
+    const resolvedTitle = title || defaultTitles[type] || 'Értesítés';
+    const resolvedIcon = icons[type] || icons.info;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'app-dialog-backdrop';
+    backdrop.id = 'app-dialog-backdrop';
+    backdrop.setAttribute('role', 'dialog');
+    backdrop.setAttribute('aria-modal', 'true');
+
+    backdrop.innerHTML = `
+      <div class="app-dialog-card">
+        <button type="button" class="app-dialog-close-x" id="app-dialog-close-x" aria-label="Bezárás">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="app-dialog-icon type-${type}">
+          <i class="${resolvedIcon}"></i>
+        </div>
+        <h3 class="app-dialog-title">${resolvedTitle}</h3>
+        <p class="app-dialog-message">${message}</p>
+        ${showInput ? `
+          <div class="app-dialog-input-wrap">
+            <input type="text" id="app-dialog-input" class="form-control" value="${inputDefault}" placeholder="${inputPlaceholder}" />
+          </div>
+        ` : ''}
+        <div class="app-dialog-actions">
+          ${cancelText ? `
+            <button type="button" class="btn btn-outline" id="app-dialog-cancel-btn">${cancelText}</button>
+          ` : ''}
+          <button type="button" class="btn btn-primary" id="app-dialog-confirm-btn">${confirmText}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add('is-open'));
+
+    const inputEl = backdrop.querySelector('#app-dialog-input');
+    const confirmBtn = backdrop.querySelector('#app-dialog-confirm-btn');
+    const cancelBtn = backdrop.querySelector('#app-dialog-cancel-btn');
+    const closeXBtn = backdrop.querySelector('#app-dialog-close-x');
+
+    if (inputEl) {
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.select();
+      }, 40);
+    } else if (confirmBtn) {
+      setTimeout(() => confirmBtn.focus(), 40);
+    }
+
+    let closed = false;
+    const cleanup = (result) => {
+      if (closed) return;
+      closed = true;
+      document.removeEventListener('keydown', onKey);
+      backdrop.classList.remove('is-open');
+      setTimeout(() => backdrop.remove(), 220);
+      resolve(result);
+    };
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup(showInput ? null : false);
+      } else if (e.key === 'Enter' && showInput) {
+        e.preventDefault();
+        cleanup(inputEl ? inputEl.value.trim() : '');
+      }
+    };
+    document.addEventListener('keydown', onKey);
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => {
+        cleanup(showInput ? (inputEl ? inputEl.value.trim() : '') : true);
+      });
+    }
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => cleanup(showInput ? null : false));
+    }
+    if (closeXBtn) {
+      closeXBtn.addEventListener('click', () => cleanup(showInput ? null : false));
+    }
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        cleanup(showInput ? null : false);
+      }
+    });
+  });
+}
+
+function showToast(message, type = 'success', customTitle = null) {
+  return showModalDialog({
+    type,
+    title: customTitle,
+    message,
+    confirmText: 'Rendben'
+  });
+}
+
+function showModalConfirm(message, title = 'Megerősítés szükséges') {
+  return showModalDialog({
+    type: 'confirm',
+    title,
+    message,
+    confirmText: 'Igen, végrehajtás',
+    cancelText: 'Mégse'
+  });
+}
+
+function showModalPrompt(message, defaultValue = 'https://', title = 'Hivatkozás beszúrása') {
+  return showModalDialog({
+    type: 'prompt',
+    title,
+    message,
+    confirmText: 'Beszúrás',
+    cancelText: 'Mégse',
+    showInput: true,
+    inputDefault: defaultValue,
+    inputPlaceholder: 'https://...'
+  });
 }
 
 // --- SEARCH INDEX DATA ---
@@ -427,15 +571,20 @@ function render() {
               <div class="staging-dev-title">
                 <i class="fa-solid fa-key"></i> Fejlesztői teszt hozzáférés
               </div>
-              <form class="staging-form" id="staging-unlock-form">
-                <input 
-                  type="password" 
-                  id="staging-password-input" 
-                  class="form-control" 
-                  placeholder="Fejlesztői jelszó..." 
-                  autocomplete="current-password"
-                  required 
-                />
+              <form class="staging-form" id="staging-unlock-form" novalidate>
+                <div class="password-field-wrapper">
+                  <input 
+                    type="password" 
+                    id="staging-password-input" 
+                    class="form-control" 
+                    placeholder="Fejlesztői jelszó..." 
+                    autocomplete="current-password"
+                    required 
+                  />
+                  <button type="button" class="password-eye-toggle" data-target-input="staging-password-input" aria-label="Jelszó megjelenítése vagy elrejtése" title="Jelszó megjelenítése / elrejtése">
+                    ${renderPasswordEyeSvg(false)}
+                  </button>
+                </div>
                 <button type="submit" class="btn btn-outline" style="white-space: nowrap;">
                   <i class="fa-solid fa-unlock"></i> Feloldás
                 </button>
@@ -457,6 +606,16 @@ function render() {
     }
   } else {
     document.body.style.overflow = '';
+  }
+
+  // Megakadályozzuk az ismételt belépési animációkat (villanást) a második rendernél
+  if (window._hasRenderedOnce) {
+    document.body.classList.add('initial-load-done');
+  } else {
+    window._hasRenderedOnce = true;
+    setTimeout(() => {
+      document.body.classList.add('initial-load-done');
+    }, 950);
   }
 
   app.innerHTML = `
@@ -1250,20 +1409,41 @@ function attachEventListeners() {
     });
   }
 
+  // Bespoke Hand-Drawn Password Eye Toggle buttons
+  document.querySelectorAll('.password-eye-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = btn.getAttribute('data-target-input');
+      const input = targetId ? document.getElementById(targetId) : null;
+      if (!input) return;
+
+      const isNowVisible = input.type === 'password';
+      input.type = isNowVisible ? 'text' : 'password';
+      btn.classList.toggle('is-visible', isNowVisible);
+      btn.innerHTML = renderPasswordEyeSvg(isNowVisible);
+      input.focus();
+    });
+  });
+
   // Admin Login form submit
   const loginForm = document.getElementById('admin-login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const pass = document.getElementById('admin-password').value;
+      const passInput = document.getElementById('admin-password');
+      const pass = passInput ? passInput.value : '';
+      if (!pass.trim()) {
+        showToast('Kérjük, írja be az adminisztrátori jelszót a belépéshez!', 'error', 'Hiányzó jelszó');
+        return;
+      }
       if (pass === 'MoRa!b18jA') {
         state.isLoggedIn = true;
         sessionStorage.setItem('demotrade_admin_logged_in', 'true');
         setPageState('admin', null, true);
-        showToast('Sikeres belépés az Admin Panelre!');
         render();
+        showToast('Sikeres belépés az Admin Panelre!', 'success', 'Üdvözöljük!');
       } else {
-        showToast('Hibás jelszó!', 'error');
+        showToast('A megadott adminisztrátori jelszó helytelen. Kérjük, ellenőrizze a beírt karaktereket a szem ikonra kattintva!', 'error', 'Hibás jelszó');
       }
     });
   }
@@ -1550,18 +1730,27 @@ function attachEventListeners() {
 
   if (editorArea) {
     document.querySelectorAll('.editor-btn[data-cmd]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const cmd = btn.getAttribute('data-cmd');
         const val = btn.getAttribute('data-val') || null;
 
         if (cmd === 'createLink') {
-          const url = prompt('Adja meg a hivatkozás URL-jét:', 'https://');
-          if (url) document.execCommand(cmd, false, url);
+          const sel = window.getSelection();
+          const savedRange = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+          const url = await showModalPrompt('Adja meg a beszúrni kívánt hivatkozás (link) teljes URL-jét:', 'https://', 'Hivatkozás beszúrása');
+          if (url) {
+            editorArea.focus();
+            if (savedRange && sel) {
+              sel.removeAllRanges();
+              sel.addRange(savedRange);
+            }
+            document.execCommand(cmd, false, url);
+          }
         } else {
           document.execCommand(cmd, false, val);
+          editorArea.focus();
         }
-        editorArea.focus();
       });
     });
 
@@ -1973,6 +2162,29 @@ function attachEventListeners() {
   // ==========================================
   // ADMIN PANEL ENHANCED EVENT HANDLERS
   // ==========================================
+  const getResolvedCategoryValue = () => {
+    const catSelect = document.getElementById('post-category');
+    const catCustom = document.getElementById('post-category-custom');
+    if (!catSelect) return 'Híreink';
+    if (catSelect.value === '__custom__') {
+      return (catCustom ? catCustom.value.trim() : '') || 'Általános';
+    }
+    return catSelect.value.trim() || 'Híreink';
+  };
+
+  const catSelectEl = document.getElementById('post-category');
+  const catCustomEl = document.getElementById('post-category-custom');
+  if (catSelectEl && catCustomEl) {
+    catSelectEl.addEventListener('change', () => {
+      if (catSelectEl.value === '__custom__') {
+        catCustomEl.style.display = 'block';
+        catCustomEl.focus();
+      } else {
+        catCustomEl.style.display = 'none';
+      }
+    });
+  }
+
   // Content Type Selector Toggle in Admin Form
   document.querySelectorAll('input[name="post-type"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
@@ -1986,23 +2198,50 @@ function attachEventListeners() {
       const titleLabel = document.getElementById('label-post-title');
       const titleInput = document.getElementById('post-title');
       const catInput = document.getElementById('post-category');
+      const catCustomInput = document.getElementById('post-category-custom');
+      const imgHiddenInput = document.getElementById('post-image');
 
       if (careerFields) careerFields.style.display = type === 'career' ? 'grid' : 'none';
       if (prodFields) prodFields.style.display = type === 'product' ? 'grid' : 'none';
+
+      // Frissítjük a kategória legördülő opciókat és az alapértelmezett kiválasztást minden fülváltáskor!
+      const defaultCatByType = {
+        blog: 'Híreink',
+        career: 'Szaktanácsadás',
+        product: 'Gyümölcsfa oltványok'
+      };
+      const optionsForType = CATEGORY_OPTIONS_BY_TYPE[type] || CATEGORY_OPTIONS_BY_TYPE.blog;
+      const targetDefaultCat = defaultCatByType[type] || 'Híreink';
+
+      if (catInput && catInput.tagName === 'SELECT') {
+        catInput.innerHTML = optionsForType.map(cat =>
+          `<option value="${cat}" ${cat === targetDefaultCat ? 'selected' : ''}>${cat}</option>`
+        ).join('') + `<option value="__custom__">+ Egyéb (saját kategória megadása)...</option>`;
+        catInput.value = targetDefaultCat;
+      } else if (catInput) {
+        catInput.value = targetDefaultCat;
+      }
+
+      if (catCustomInput) {
+        catCustomInput.style.display = 'none';
+        catCustomInput.value = '';
+      }
+
+      // Ha még nem töltött fel saját képet, a típusnak megfelelő alapértelmezett képet állítjuk be
+      if (imgHiddenInput && !imgHiddenInput.value.startsWith('data:image') && !state.editingPostId) {
+        imgHiddenInput.value = type === 'product' ? '/images/gyumolcsfa_oltvanyok.jpg' : (type === 'career' ? '/images/karrier_csapat.jpg' : '/images/hero.png');
+      }
 
       if (titleLabel && titleInput) {
         if (type === 'career') {
           titleLabel.textContent = 'Pozíció Megnevezése *';
           titleInput.placeholder = 'Pl. Mezőgazdasági Szaktanácsadó...';
-          if (!catInput.value || catInput.value === 'Híreink') catInput.value = 'Szaktanácsadás';
         } else if (type === 'product') {
           titleLabel.textContent = 'Termék / Oltvány Neve *';
           titleInput.placeholder = 'Pl. Jonagold Alma Oltvány (M9)...';
-          if (!catInput.value || catInput.value === 'Híreink') catInput.value = 'Gyümölcsfa oltványok';
         } else {
           titleLabel.textContent = 'Cikk Címe *';
           titleInput.placeholder = 'Pl. Növényvédelmi előrejelzés...';
-          if (!catInput.value) catInput.value = 'Híreink';
         }
       }
     });
@@ -2044,7 +2283,7 @@ function attachEventListeners() {
     } else {
       title = document.getElementById('post-title')?.value.trim() || 'Cím nélküli tartalom';
       type = document.querySelector('input[name="post-type"]:checked')?.value || 'blog';
-      category = document.getElementById('post-category')?.value.trim() || 'Kategória';
+      category = getResolvedCategoryValue() || 'Kategória';
       author = document.getElementById('post-author')?.value.trim() || 'Moravszki Gábor';
       image = document.getElementById('post-image')?.value.trim() || (type === 'product' ? '/images/gyumolcsfa_oltvanyok.jpg' : (type === 'career' ? '/images/karrier_csapat.jpg' : '/images/hero.png'));
       excerpt = document.getElementById('post-excerpt')?.value.trim() || '';
@@ -2186,7 +2425,7 @@ function attachEventListeners() {
   const generateFacebookTemplate = () => {
     const type = document.querySelector('input[name="post-type"]:checked')?.value || 'blog';
     const title = document.getElementById('post-title')?.value.trim() || 'Új Hirdetés';
-    const category = document.getElementById('post-category')?.value.trim() || 'Híreink';
+    const category = getResolvedCategoryValue() || 'Híreink';
     const excerpt = document.getElementById('post-excerpt')?.value.trim() || '';
     const price = document.getElementById('prod-price')?.value.trim();
     const loc = document.getElementById('job-location')?.value.trim();
@@ -2306,7 +2545,7 @@ function attachEventListeners() {
       const id = document.getElementById('post-id')?.value;
       const type = document.querySelector('input[name="post-type"]:checked')?.value || 'blog';
       const title = document.getElementById('post-title')?.value.trim();
-      const category = document.getElementById('post-category')?.value.trim() || 'Híreink';
+      const category = getResolvedCategoryValue();
       const author = document.getElementById('post-author')?.value.trim() || 'Moravszki Gábor';
       let image = document.getElementById('post-image')?.value.trim() || (type === 'product' ? '/images/gyumolcsfa_oltvanyok.jpg' : (type === 'career' ? '/images/karrier_csapat.jpg' : '/images/hero.png'));
       const excerpt = document.getElementById('post-excerpt')?.value.trim();
@@ -2320,8 +2559,18 @@ function attachEventListeners() {
       const price = document.getElementById('prod-price')?.value.trim();
       const badge = document.getElementById('prod-badge')?.value.trim();
 
+      if (!title) {
+        showToast('Kérjük, adja meg a bejegyzés címét / megnevezését!', 'error', 'Hiányzó cím');
+        return;
+      }
+
+      if (!excerpt) {
+        showToast('Kérjük, adja meg a rövid kivonatot (1–2 mondatos összefoglalót)!', 'error', 'Hiányzó kivonat');
+        return;
+      }
+
       if (!content || content === '<br>') {
-        showToast('Kérjük adja meg a részletes szöveges leírást!', 'error');
+        showToast('Kérjük, adja meg a részletes szöveges leírást!', 'error', 'Hiányzó leírás');
         return;
       }
 
@@ -2458,9 +2707,13 @@ function attachEventListeners() {
 
   // Admin Delete button (Syncs with Supabase)
   document.querySelectorAll('.delete-post-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
-      if (confirm('Biztosan törölni szeretné ezt a bejegyzést?')) {
+      const confirmed = await showModalConfirm(
+        'Biztosan véglegesen törölni szeretné ezt a bejegyzést a rendszerből?',
+        'Bejegyzés törlése'
+      );
+      if (confirmed) {
         const filtered = state.posts.filter(p => p.id !== id);
         savePosts(filtered);
 
@@ -2469,9 +2722,9 @@ function attachEventListeners() {
           if (error) console.warn('Supabase delete notice:', error.message);
         });
 
-        showToast('Bejegyzés törölve!');
         if (state.editingPostId === id) state.editingPostId = null;
         render();
+        showToast('A kiválasztott bejegyzés sikeresen törölve lett!', 'success', 'Törölve');
       }
     });
   });
@@ -2479,12 +2732,16 @@ function attachEventListeners() {
   // Admin Reset posts button
   const resetBtn = document.getElementById('reset-posts-btn');
   if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      if (confirm('Visszaállítja a gyári demo cikkeket, állásokat és termékeket?')) {
+    resetBtn.addEventListener('click', async () => {
+      const confirmed = await showModalConfirm(
+        'Biztosan visszaállítja az alapértelmezett cikkeket, állásokat és termékeket?',
+        'Alapállapot visszaállítása'
+      );
+      if (confirmed) {
         savePosts(INITIAL_POSTS);
         state.editingPostId = null;
-        showToast('Alapértelmezett bejegyzések és termékek visszaállítva!');
         render();
+        showToast('Az alapértelmezett bejegyzések és termékek sikeresen visszaállítva!', 'success', 'Alapállapot visszaállítva');
       }
     });
   }

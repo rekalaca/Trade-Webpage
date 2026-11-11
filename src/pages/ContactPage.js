@@ -61,7 +61,7 @@ export function renderContactSection() {
             <h3 style="font-size: 1.6rem; margin-bottom: 0.5rem; text-transform: uppercase;">Üzenetküldés</h3>
             <p style="color: var(--gray-600); font-size: 0.95rem; margin-bottom: 1.5rem;">Írja meg érdeklődését és közvetlenül továbbítjuk szakértő munkatársunknak!</p>
             
-            <form id="contact-form">
+            <form id="contact-form" novalidate>
               <div class="form-group">
                 <label for="contact-name">Név *</label>
                 <input type="text" id="contact-name" class="form-control" placeholder="Az Ön teljes neve" required />

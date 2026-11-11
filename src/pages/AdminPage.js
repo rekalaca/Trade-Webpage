@@ -1,3 +1,58 @@
+export const CATEGORY_OPTIONS_BY_TYPE = {
+  blog: [
+    'Híreink',
+    'Növényvédelem',
+    'Pályázatok',
+    'Műszaki felülvizsgálat',
+    'Szaktanácsadás',
+    'alma',
+    'fagy',
+    'csonthéjasok',
+    'Adminisztráció'
+  ],
+  career: [
+    'Szaktanácsadás',
+    'Agrármérnök',
+    'Növényorvos',
+    'Pályázatírás & Adminisztráció',
+    'Álláslehetőség'
+  ],
+  product: [
+    'Gyümölcsfa oltványok',
+    'Alma oltványok',
+    'Cseresznye oltványok',
+    'Szilva oltványok',
+    'Kajszi oltványok',
+    'Meggy oltványok',
+    'Csonthéjasok',
+    'Növénykondicionálók'
+  ]
+};
+
+export function renderPasswordEyeSvg(isVisible = false) {
+  if (isVisible) {
+    // Elegáns, kézzel rajzolt stílusú nyitott szem finom írisz-gyűrűvel és csillanással
+    return `
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M2.2 12.3C4.3 7.7 7.8 5.2 12 5.2C16.2 5.2 19.7 7.7 21.8 12.3C19.7 16.6 16.2 18.8 12 18.8C7.8 18.8 4.3 16.6 2.2 12.3Z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5.2 7.4C3.9 8.4 2.9 9.7 2.2 11.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.55"/>
+        <circle cx="12" cy="12" r="3.3" stroke="currentColor" stroke-width="1.65"/>
+        <circle cx="13.1" cy="10.9" r="0.85" fill="currentColor"/>
+      </svg>
+    `;
+  }
+  // Elegáns, modern rajzolt lehunyt szem ívelt szempillákkal
+  return `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M2.5 10.6C4.7 14.3 8.1 16.2 12 16.2C15.9 16.2 19.3 14.3 21.5 10.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M5.4 13.7L3.7 16.3" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+      <path d="M9.6 15.8L8.8 18.9" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+      <path d="M14.4 15.8L15.2 18.9" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+      <path d="M18.6 13.7L20.3 16.3" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
 export function renderAdminPage(posts, isLoggedIn, editingPostId = null, activeFilter = 'all') {
   if (!isLoggedIn) {
     return `
@@ -9,10 +64,15 @@ export function renderAdminPage(posts, isLoggedIn, editingPostId = null, activeF
           <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Admin Belépés</h2>
           <p style="color: var(--gray-600); font-size: 0.95rem; margin-bottom: 2rem;">Kérjük adja meg az adminisztrátori jelszót a szerkesztő eléréséhez!</p>
 
-          <form id="admin-login-form">
+          <form id="admin-login-form" novalidate>
             <div class="form-group" style="text-align: left;">
               <label for="admin-password">Jelszó</label>
-              <input type="password" id="admin-password" class="form-control" placeholder="Adja meg a jelszót..." required autofocus />
+              <div class="password-field-wrapper">
+                <input type="password" id="admin-password" class="form-control" placeholder="Adja meg a jelszót..." required autofocus />
+                <button type="button" class="password-eye-toggle" data-target-input="admin-password" aria-label="Jelszó megjelenítése vagy elrejtése" title="Jelszó megjelenítése / elrejtése">
+                  ${renderPasswordEyeSvg(false)}
+                </button>
+              </div>
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
@@ -26,6 +86,12 @@ export function renderAdminPage(posts, isLoggedIn, editingPostId = null, activeF
 
   const editingPost = editingPostId ? posts.find(p => p.id === editingPostId) : null;
   const currentType = editingPost ? (editingPost.type || 'blog') : 'blog';
+  const defaultCatForType = currentType === 'career' ? 'Szaktanácsadás' : (currentType === 'product' ? 'Gyümölcsfa oltványok' : 'Híreink');
+  const currentCategory = editingPost && editingPost.category ? editingPost.category : defaultCatForType;
+  const baseCategories = CATEGORY_OPTIONS_BY_TYPE[currentType] || CATEGORY_OPTIONS_BY_TYPE.blog;
+  const categoryOptions = baseCategories.includes(currentCategory)
+    ? baseCategories
+    : [currentCategory, ...baseCategories];
 
   const blogCount = posts.filter(p => !p.type || p.type === 'blog').length;
   const careerCount = posts.filter(p => p.type === 'career').length;
@@ -63,7 +129,7 @@ export function renderAdminPage(posts, isLoggedIn, editingPostId = null, activeF
           ${editingPost ? 'Tartalom Módosítása' : 'Új Tartalom Létrehozása'}
         </h3>
 
-        <form id="admin-post-form">
+        <form id="admin-post-form" novalidate>
           <input type="hidden" id="post-id" value="${editingPost ? editingPost.id : ''}" />
 
           <!-- STEP 1: CONTENT TYPE SELECTOR (PROMINENT TABS) -->
@@ -100,21 +166,13 @@ export function renderAdminPage(posts, isLoggedIn, editingPostId = null, activeF
 
             <div class="form-group" style="margin: 0;">
               <label for="post-category" style="font-weight: 700;">Kategória *</label>
-              <input type="text" id="post-category" class="form-control" list="category-datalist" placeholder="Válasszon vagy írjon be..." value="${editingPost ? editingPost.category : (currentType === 'career' ? 'Szaktanácsadás' : (currentType === 'product' ? 'Gyümölcsfa oltványok' : 'Híreink'))}" required />
-              <datalist id="category-datalist">
-                <!-- Dynamically populated or rich options -->
-                <option value="Híreink">
-                <option value="Pályázatok">
-                <option value="Műszaki felülvizsgálat">
-                <option value="Szaktanácsadás">
-                <option value="Növényvédelem">
-                <option value="Gyümölcsfa oltványok">
-                <option value="Alma oltványok">
-                <option value="Csonthéjasok">
-                <option value="Növénykondicionálók">
-                <option value="Álláslehetőség">
-                <option value="Adminisztráció">
-              </datalist>
+              <select id="post-category" class="form-control" style="cursor: pointer;" required>
+                ${categoryOptions.map(cat => `
+                  <option value="${cat}" ${cat === currentCategory ? 'selected' : ''}>${cat}</option>
+                `).join('')}
+                <option value="__custom__">+ Egyéb (saját kategória megadása)...</option>
+              </select>
+              <input type="text" id="post-category-custom" class="form-control" placeholder="Írja be az egyedi kategóriát..." style="display: none; margin-top: 0.5rem;" />
             </div>
 
             <div class="form-group" style="margin: 0;">

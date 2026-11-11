@@ -159,7 +159,7 @@ export function renderCareerPage(posts) {
               <p class="career-form-subtitle">Töltse ki az alábbi űrlapot és csatolja fényképes szakmai önéletrajzát (PDF vagy Word formátumban)!</p>
             </div>
 
-            <form id="career-application-form">
+            <form id="career-application-form" novalidate>
               <!-- Hidden Anti-Bot Honeypot -->
               <div style="display: none !important;" aria-hidden="true">
                 <input type="text" id="career-hp-fax" name="hp_fax" tabindex="-1" autocomplete="off" />

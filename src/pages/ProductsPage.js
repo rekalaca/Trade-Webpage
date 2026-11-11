@@ -176,7 +176,7 @@ export function renderProductsPage(posts, selectedCategory = 'all', searchTerm =
             <p style="color: var(--gray-600); font-size: 0.9rem; margin-top: 0.3rem;">Adja meg elérhetőségeit és kérjen tájékoztatást a kívánt fajtáról vagy mennyiségről!</p>
           </div>
 
-          <form id="product-inquiry-form" style="padding: 1.5rem 2rem 2rem;">
+          <form id="product-inquiry-form" novalidate style="padding: 1.5rem 2rem 2rem;">
             <input type="hidden" id="inquiry-product-name" value="" />
             
             <div class="form-group">
